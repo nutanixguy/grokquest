@@ -1,6 +1,5 @@
-use colored::*;
 use crate::game_state::GameState;
-use textwrap;
+use colored::*;
 
 pub struct GamePrompt {}
 
@@ -52,13 +51,17 @@ impl GamePrompt {
             game_state.inventory,
             game_state.visited_locations,
             game_state.summary,
-            game_state.last_response.as_ref().unwrap_or(&"[Game Start]".to_string()),
+            game_state
+                .last_response
+                .as_ref()
+                .unwrap_or(&"[Game Start]".to_string()),
             game_state.current_prompt
         )
     }
 
     pub fn get_welcome_message() -> String {
-        format!("{}\n{}", 
+        format!(
+            "{}\n{}",
             "\n=== AI ADVENTURE ===".cyan().bold(),
             "Welcome to the AI-powered adventure game!".green()
         )
@@ -76,7 +79,7 @@ impl GamePrompt {
             "3. Sci-Fi - Space, technology, and aliens".blue(),
             "4. Historical - Swords, duels, and intrigue".yellow(),
             "5. Surprise me - Let the AI choose for you".magenta(),
-            "6. You choose - Custom theme".cyan()
+            "6. You choose - Custom theme".cyan(),
         ];
 
         let mut prompt = format!("{}\n", title);
@@ -126,7 +129,9 @@ impl GamePrompt {
     }
 
     pub fn get_player_input_prompt() -> String {
-        "What do you do? (type your choice or 'quit' to exit): ".cyan().to_string()
+        "What do you do? (type your choice or 'quit' to exit): "
+            .cyan()
+            .to_string()
     }
 
     pub fn get_quit_message() -> String {
@@ -140,10 +145,10 @@ impl GamePrompt {
     pub fn get_status_labels() -> (String, String, String, String, String) {
         (
             "Name:".to_string(),
-            "Location:".to_string(), 
+            "Location:".to_string(),
             "Inventory:".cyan().to_string(),
             "Empty".dimmed().to_string(),
-            "Visited locations:".cyan().to_string()
+            "Visited locations:".cyan().to_string(),
         )
     }
 

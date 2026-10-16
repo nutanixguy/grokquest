@@ -6,34 +6,42 @@ pub enum GptModel {
     Gpt4Turbo,
     Gpt5,
     OpenAio4Mini,
-    OpenAio3Pro
+    OpenAio3Pro,
 }
 
-impl Into<String> for GptModel {
-    fn into(self) -> String {
+impl GptModel {
+    pub fn as_str(self) -> &'static str {
         match self {
-            GptModel::Gpt3_5Turbo => "gpt-3.5-turbo".to_string(),
-            GptModel::Gpt4o => "gpt-4o".to_string(),
-            GptModel::Gpt4oMini => "gpt-4o-mini".to_string(),
-            GptModel::Gpt4Turbo => "gpt-4-turbo".to_string(),
-            GptModel::Gpt5 => "gpt-5".to_string(),
-            GptModel::OpenAio4Mini => "openai-o4-mini".to_string(),
-            GptModel::OpenAio3Pro => "openai-o3-pro".to_string()
+            GptModel::Gpt3_5Turbo => "gpt-3.5-turbo",
+            GptModel::Gpt4o => "gpt-4o",
+            GptModel::Gpt4oMini => "gpt-4o-mini",
+            GptModel::Gpt4Turbo => "gpt-4-turbo",
+            GptModel::Gpt5 => "gpt-5",
+            GptModel::OpenAio4Mini => "openai-o4-mini",
+            GptModel::OpenAio3Pro => "openai-o3-pro",
         }
     }
 }
 
-impl Into<GptModel> for String {
-    fn into(self) -> GptModel {
-        match self.as_str() {
-            "gpt-3.5-turbo" => GptModel::Gpt3_5Turbo,
-            "gpt-4o" => GptModel::Gpt4o,
-            "gpt-4o-mini" => GptModel::Gpt4oMini,
-            "gpt-4-turbo" => GptModel::Gpt4Turbo,
-            "gpt-5" => GptModel::Gpt5,
-            "openai-o4-mini" => GptModel::OpenAio4Mini,
-            "openai-o3-mini" => GptModel::OpenAio3Pro,
-            _ => panic!("Unknown model: {}", self)
+impl From<GptModel> for String {
+    fn from(model: GptModel) -> Self {
+        model.as_str().to_string()
+    }
+}
+
+impl TryFrom<&str> for GptModel {
+    type Error = String;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "gpt-3.5-turbo" => Ok(GptModel::Gpt3_5Turbo),
+            "gpt-4o" => Ok(GptModel::Gpt4o),
+            "gpt-4o-mini" => Ok(GptModel::Gpt4oMini),
+            "gpt-4-turbo" => Ok(GptModel::Gpt4Turbo),
+            "gpt-5" => Ok(GptModel::Gpt5),
+            "openai-o4-mini" => Ok(GptModel::OpenAio4Mini),
+            "openai-o3-mini" => Ok(GptModel::OpenAio3Pro),
+            other => Err(format!("Unknown model: {other}")),
         }
     }
 }
