@@ -26,7 +26,7 @@ Embark on a thrilling journey through worlds of fantasy, horror, sci-fi, or hist
 
 ### Prerequisites
 - **Rust** (latest stable version recommended)
-- **OpenAI API Key** - Get yours from [OpenAI's website](https://openai.com/api/)
+- **OpenAI API Key** - Get yours from [OpenAI's website](https://openai.com/api/), or an **xAI API key** to run on Grok (see below)
 
 ### Installation & Running
 ```bash
@@ -41,6 +41,33 @@ cargo run -- --api-key <YOUR_API_KEY>
 export OPENAI_API_KEY=<YOUR_API_KEY>
 cargo run
 ```
+
+### Run on xAI Grok
+
+Grok uses xAI's OpenAI-compatible chat completions API at `https://api.x.ai/v1`. The default model is `grok-4.7` with `low` reasoning effort. Set `LLM_REASONING_EFFORT=medium` when you want the narrator to think longer.
+
+Copy the placeholder file, fill in your own key, and leave `.env` uncommitted:
+
+```bash
+cp .env.example .env
+# Edit .env and set XAI_API_KEY.
+
+set -a
+source .env
+set +a
+cargo run
+```
+
+Or pass the environment for a single run:
+
+```bash
+LLM_PROVIDER=xai XAI_API_KEY=<YOUR_XAI_API_KEY> cargo run
+
+# Medium reasoning effort, optional model override
+LLM_PROVIDER=xai XAI_API_KEY=<YOUR_XAI_API_KEY> LLM_REASONING_EFFORT=medium cargo run
+```
+
+`LLM_PROVIDER=openai` is the default, so existing OpenAI setups keep working with `OPENAI_API_KEY`. The xAI key is read only from `XAI_API_KEY` or `--xai-api-key`.
 
 
 
@@ -70,12 +97,17 @@ What do you do? (type your choice or 'quit' to exit): I examine the gates for tr
 
 ## Requirements
 - Rust
-- OpenAI API key (ENV variable `OPENAI_API_KEY`)
+- An API key for the selected provider:
+  - OpenAI (`LLM_PROVIDER=openai`, the default): `OPENAI_API_KEY`
+  - xAI Grok (`LLM_PROVIDER=xai`): `XAI_API_KEY`
 
 ## Command line arguments
 The application accepts the following parameters:
-- `--api-key`: specify custom key if not defined in env
-- `--model`: choose OpenAI GPT model (e.g. `gpt-3.5-turbo`, `gpt-4o-mini`, `gpt-4-turbo`, etc.). If not specified `gpt-4o-mini` is used
+- `--provider` / `LLM_PROVIDER`: `openai` (default) or `xai`
+- `--api-key` / `OPENAI_API_KEY`: OpenAI key, required for the OpenAI provider
+- `--xai-api-key` / `XAI_API_KEY`: xAI key, required for the xAI provider
+- `--model` / `LLM_MODEL`: model id. Defaults to `gpt-4o-mini` for OpenAI and `grok-4.7` for xAI. OpenAI still accepts `gpt-3.5-turbo`, `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-5`, and `openai-o4-mini`
+- `--reasoning-effort` / `LLM_REASONING_EFFORT`: xAI only, `low` (default) or `medium`
 
 Example:
 ```bash
