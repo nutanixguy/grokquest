@@ -14,10 +14,6 @@ use crate::gpt_model::GptModel;
 
 pub const OPENAI_BASE_URL: &str = "https://api.openai.com/v1";
 pub const XAI_BASE_URL: &str = "https://api.x.ai/v1";
-pub const OPENAI_CHAT_COMPLETIONS_URL: &str = "https://api.openai.com/v1/chat/completions";
-pub const XAI_CHAT_COMPLETIONS_URL: &str = "https://api.x.ai/v1/chat/completions";
-pub const OPENAI_MODELS_URL: &str = "https://api.openai.com/v1/models";
-pub const XAI_MODELS_URL: &str = "https://api.x.ai/v1/models";
 pub const OPENAI_DEFAULT_MODEL: &str = "gpt-4o-mini";
 pub const XAI_DEFAULT_MODEL: &str = "grok-4.7";
 
@@ -496,7 +492,11 @@ impl ChatClient {
 
         match response.status() {
             reqwest::StatusCode::OK => Ok(()),
-            status => Err(format!("Invalid API key: {status}").into()),
+            status => Err(format!(
+                "Invalid API key for the {} provider: {status}",
+                self.provider.name()
+            )
+            .into()),
         }
     }
 }
@@ -673,25 +673,25 @@ mod tests {
 
     #[test]
     fn providers_point_at_their_chat_completions_endpoints() {
-        assert_eq!(
-            endpoint_url(OPENAI_BASE_URL, "chat/completions"),
-            OPENAI_CHAT_COMPLETIONS_URL
-        );
-        assert_eq!(
-            endpoint_url(XAI_BASE_URL, "chat/completions"),
-            XAI_CHAT_COMPLETIONS_URL
-        );
-        assert_eq!(endpoint_url(OPENAI_BASE_URL, "models"), OPENAI_MODELS_URL);
-        assert_eq!(endpoint_url(XAI_BASE_URL, "models"), XAI_MODELS_URL);
-
         let openai = selection_provider(select(Some("openai"), None, None).unwrap());
         let xai = selection_provider(select(Some("xai"), None, Some("low")).unwrap());
         assert_eq!(openai.name(), "openai");
         assert_eq!(xai.name(), "xai");
-        assert_eq!(openai.chat_completions_url(), OPENAI_CHAT_COMPLETIONS_URL);
-        assert_eq!(xai.chat_completions_url(), XAI_CHAT_COMPLETIONS_URL);
-        assert_eq!(openai.models_url(), OPENAI_MODELS_URL);
-        assert_eq!(xai.models_url(), XAI_MODELS_URL);
+        assert_eq!(
+            openai.chat_completions_url(),
+            "https://api.openai.com/v1/chat/completions"
+        );
+        assert_eq!(
+            xai.chat_completions_url(),
+            "https://api.x.ai/v1/chat/completions"
+        );
+        assert_eq!(openai.models_url(), "https://api.openai.com/v1/models");
+        assert_eq!(xai.models_url(), "https://api.x.ai/v1/models");
+        assert_eq!(
+            openai.chat_completions_url(),
+            endpoint_url(OPENAI_BASE_URL, "chat/completions")
+        );
+        assert_eq!(xai.models_url(), endpoint_url(XAI_BASE_URL, "models"));
     }
 
     #[test]
