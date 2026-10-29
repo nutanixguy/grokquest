@@ -7,7 +7,7 @@ Embark on a thrilling journey through worlds of fantasy, horror, sci-fi, or hist
 ![Screenshot showing AI-Dventure's interactive gameplay with story text, player choices, and inventory system](screenshot.png)
 
 ## Features ✨
-- **🤖 AI Storyteller:** Powered by OpenAI's GPT models to create immersive, dynamic narratives that adapt to your choices
+- **🤖 AI Storyteller:** A pluggable AI provider writes the narrative. OpenAI is the default, xAI Grok is built in, and any OpenAI-compatible API can be selected with configuration
 - **🎯 Dynamic Choices:** Choose from suggested options OR type your own custom actions - the AI will seamlessly incorporate your creativity into the story
 - **🎒 Persistent Game State:** Your inventory, current location, and story progress are continuously tracked and influence future events
 - **🌍 Rich Themes:** Select from fantasy, horror, sci-fi, historical settings, or let the AI surprise you with a unique theme
@@ -26,7 +26,7 @@ Embark on a thrilling journey through worlds of fantasy, horror, sci-fi, or hist
 
 ### Prerequisites
 - **Rust** (latest stable version recommended)
-- **OpenAI API Key** - Get yours from [OpenAI's website](https://openai.com/api/), or an **xAI API key** to run on Grok (see below)
+- An API key for the provider you choose. OpenAI keys come from [OpenAI](https://openai.com/api/). xAI keys run Grok. Any other OpenAI-compatible API works with a base URL (see below)
 
 ### Installation & Running
 ```bash
@@ -42,15 +42,23 @@ export OPENAI_API_KEY=<YOUR_API_KEY>
 cargo run
 ```
 
-### Run on xAI Grok
+### Choosing an AI provider
 
-Grok uses xAI's OpenAI-compatible chat completions API at `https://api.x.ai/v1`. The default model is `grok-4.7` with `low` reasoning effort. Set `LLM_REASONING_EFFORT=medium` when you want the narrator to think longer.
+The game depends on one provider interface. `AI_PROVIDER` picks the implementation:
+
+- `openai` (default) uses `OPENAI_API_KEY` and `gpt-4o-mini`
+- `xai` uses `XAI_API_KEY`, `grok-4.7`, and `low` reasoning effort
+- `compatible` calls any OpenAI-compatible server. Set `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL`
+
+`LLM_PROVIDER` still selects the backend when `AI_PROVIDER` is unset. `--provider` overrides both. `AI_BASE_URL` overrides the API root for any provider. `AI_MODEL` overrides the model and wins over `LLM_MODEL`.
+
+Grok uses xAI's chat completions API. The default host is `https://api.x.ai/v1`. Set `LLM_REASONING_EFFORT=medium` when you want the narrator to think longer.
 
 Copy the placeholder file, fill in your own key, and leave `.env` uncommitted:
 
 ```bash
 cp .env.example .env
-# Edit .env and set XAI_API_KEY.
+# Edit .env and set the key for the provider you selected.
 
 set -a
 source .env
@@ -61,17 +69,31 @@ cargo run
 Or pass the environment for a single run:
 
 ```bash
-LLM_PROVIDER=xai XAI_API_KEY=<YOUR_XAI_API_KEY> cargo run
+# xAI Grok
+AI_PROVIDER=xai XAI_API_KEY=<YOUR_XAI_API_KEY> cargo run
 
-# Medium reasoning effort, optional model override
+# The same backend through the existing LLM_PROVIDER variable
 LLM_PROVIDER=xai XAI_API_KEY=<YOUR_XAI_API_KEY> LLM_REASONING_EFFORT=medium cargo run
+
+# Any OpenAI-compatible endpoint
+AI_PROVIDER=compatible \
+  AI_BASE_URL=https://api.example.com/v1 \
+  AI_API_KEY=<YOUR_API_KEY> \
+  AI_MODEL=<MODEL_ID> \
+  cargo run
 ```
 
-`LLM_PROVIDER=openai` is the default, so existing OpenAI setups keep working with `OPENAI_API_KEY`. The xAI key is read only from `XAI_API_KEY` or `--xai-api-key`.
+`AI_PROVIDER=openai` is the default, so existing OpenAI setups keep working with `OPENAI_API_KEY`. Keys are read only from the environment or the matching flag.
 
+### Add a provider
 
+An OpenAI-compatible endpoint needs no new code. Set `AI_PROVIDER=compatible`, `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL`.
 
+A backend with a different request shape is three steps in `src/llm.rs`:
 
+1. Implement the `LlmProvider` trait.
+2. Match the provider name in `ProviderKind` and `provider_from_selection`.
+3. Read its API key from its own environment variable in `resolve_api_key`.
 
 ## Example Gameplay
 ```
@@ -98,15 +120,18 @@ What do you do? (type your choice or 'quit' to exit): I examine the gates for tr
 ## Requirements
 - Rust
 - An API key for the selected provider:
-  - OpenAI (`LLM_PROVIDER=openai`, the default): `OPENAI_API_KEY`
-  - xAI Grok (`LLM_PROVIDER=xai`): `XAI_API_KEY`
+  - OpenAI (`AI_PROVIDER=openai`, the default): `OPENAI_API_KEY`
+  - xAI Grok (`AI_PROVIDER=xai`): `XAI_API_KEY`
+  - Any OpenAI-compatible API (`AI_PROVIDER=compatible`): `AI_API_KEY`, plus `AI_BASE_URL` and `AI_MODEL`
 
 ## Command line arguments
 The application accepts the following parameters:
-- `--provider` / `LLM_PROVIDER`: `openai` (default) or `xai`
+- `--provider`: `openai` (default), `xai`, or `compatible`. When the flag is omitted, `AI_PROVIDER` is used, then `LLM_PROVIDER`
 - `--api-key` / `OPENAI_API_KEY`: OpenAI key, required for the OpenAI provider
 - `--xai-api-key` / `XAI_API_KEY`: xAI key, required for the xAI provider
-- `--model` / `LLM_MODEL`: model id. Defaults to `gpt-4o-mini` for OpenAI and `grok-4.7` for xAI. OpenAI still accepts `gpt-3.5-turbo`, `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-5`, and `openai-o4-mini`
+- `--ai-api-key` / `AI_API_KEY`: key for `compatible`
+- `--base-url` / `AI_BASE_URL`: API root, such as `https://api.example.com/v1`. Required for `compatible`. Optional override for OpenAI and xAI
+- `--model`: model id. When the flag is omitted, `AI_MODEL` is used, then `LLM_MODEL`. Defaults to `gpt-4o-mini` for OpenAI and `grok-4.7` for xAI. Required for `compatible`. The built-in OpenAI host still accepts `gpt-3.5-turbo`, `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-5`, and `openai-o4-mini`
 - `--reasoning-effort` / `LLM_REASONING_EFFORT`: xAI only, `low` (default) or `medium`
 
 Example:
